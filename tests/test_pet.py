@@ -2,6 +2,7 @@ from wsgiref.util import request_uri
 
 import allure
 import requests
+import pytest
 import jsonschema
 from .schemas.pet_schema import PET_SCHEMA
 
@@ -162,4 +163,30 @@ class TestPet:
             get_response = requests.get(f"{BASE_URL}/pet/{pet_id}")
             assert get_response.status_code == 404, "Питомец не был удален, статус не 404"
 
+    @allure.title("Получение списка питомцев по статусу")
+    @pytest.mark.parametrize(
+        "status, expected_status_code, expected_response_type",
+        [
+            ("available", 200,list),
+            ("pending", 200,list),
+            ("sold", 200,list),
+            ("",400,str),
+            ("abracadabra",400,str),
+        ]
+    )
+    def test_get_pets_by_status(self, status, expected_status_code, expected_response_type):
+        with allure.step(f"Отправка запроса на получение питомца по статусу {status}"):
+            response = requests.get(f"{BASE_URL}/pet/findByStatus", params= {"status": status})
+
+        with allure.step("Проверка статуса ответа"):
+            assert response.status_code == expected_status_code
+
+        with allure.step("Проверка формата данных"):
+
+            if response.status_code == 200:
+                assert isinstance(response.json(), list)
+            else:
+                assert isinstance(response.text, expected_response_type)
+                assert "message" in response.json()
+                assert "Input error: query parameter `status value" in response.json()["message"]
 
