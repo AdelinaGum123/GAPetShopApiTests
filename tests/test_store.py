@@ -4,6 +4,8 @@ import allure
 import requests
 import jsonschema
 import pytest
+
+from .schemas.inventory_schema import INVENTORY_SCHEMA
 from .schemas.store_schema import STORE_SCHEMA
 
 BASE_URL = "http://5.181.109.28:9090/api/v3"
@@ -76,14 +78,19 @@ class TestStore:
 
     @allure.title("Получение инвентаря магазина")
     def test_get_store_inventory(self):
-        with allure.step("Отправка запроса на получение информации о инвентаре магазина"):
+        with allure.step("Отправка запроса"):
             response = requests.get(url=f"{BASE_URL}/store/inventory")
-            inventory = response.json()
 
         with allure.step("Проверка статуса ответа"):
             assert response.status_code == 200, "Код ответа не совпал с ожидаемым"
 
-        with allure.step("Проверяем структуру и данные ответа"):
-            assert isinstance(inventory, dict), "Ответ должен быть словарём"
-            assert "approved" in inventory, "Отсутствует поле 'approved'"
-            assert "delivered" in inventory, "Отсутствует поле 'delivered'"
+        with allure.step("Проверка структуры ответа"):
+            inventory_data = response.json()
+            jsonschema.validate(instance=inventory_data, schema=INVENTORY_SCHEMA)
+
+            if "approved" in inventory_data:
+                assert inventory_data["approved"] >= 0, "Значение approved должно быть неотрицательным"
+            if "delivered" in inventory_data:
+                assert inventory_data["delivered"] >= 0, "Значение delivered должно быть неотрицательным"
+            if "placed" in inventory_data:
+                assert inventory_data["placed"] >= 0, "Значение placed должно быть неотрицательным"
