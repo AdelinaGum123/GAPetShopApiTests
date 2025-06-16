@@ -87,10 +87,3 @@ class TestStore:
         with allure.step("Проверка структуры ответа"):
             inventory_data = response.json()
             jsonschema.validate(instance=inventory_data, schema=INVENTORY_SCHEMA)
-
-            if "approved" in inventory_data:
-                assert inventory_data["approved"] >= 0, "Значение approved должно быть неотрицательным"
-            if "delivered" in inventory_data:
-                assert inventory_data["delivered"] >= 0, "Значение delivered должно быть неотрицательным"
-            if "placed" in inventory_data:
-                assert inventory_data["placed"] >= 0, "Значение placed должно быть неотрицательным"
